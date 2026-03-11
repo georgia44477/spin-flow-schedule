@@ -13,7 +13,7 @@ interface WaiverModalProps {
 
 const WAIVER_TEXT = `ASSUMPTION OF RISK & RELEASE OF LIABILITY WAIVER
 
-VERTIGO POLE & DANCE STUDIO
+STUDIO ROXX POLE & DANCE STUDIO
 
 By signing this waiver, I acknowledge and agree to the following:
 
