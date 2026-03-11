@@ -32,11 +32,20 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
     if (!selectedTier || isFull) return;
     setIsGripping(true);
     gripTimer.current = setTimeout(() => {
-      setGripComplete(true);
       setIsGripping(false);
-      onBook(studioClass.id, selectedTier);
+      setShowWaiver(true); // Show waiver instead of immediately booking
     }, 1500);
-  }, [selectedTier, isFull, studioClass.id, onBook]);
+  }, [selectedTier, isFull]);
+
+  const handleWaiverSign = useCallback(() => {
+    setShowWaiver(false);
+    setGripComplete(true);
+    onBook(studioClass.id, selectedTier!);
+  }, [studioClass.id, selectedTier, onBook]);
+
+  const handleWaiverCancel = useCallback(() => {
+    setShowWaiver(false);
+  }, []);
 
   const endGrip = useCallback(() => {
     if (gripTimer.current) clearTimeout(gripTimer.current);
