@@ -4,18 +4,23 @@ import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
 import { Clock, Users, ChevronDown } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
+import PaymentModal from "@/components/PaymentModal";
 
 interface ClassCardProps {
   studioClass: StudioClass;
+  accessories?: { label: string; price: number }[];
+  discount?: number;
+  discountCode?: string;
   onBook: (classId: string, tier: string) => void;
 }
 
-const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
+const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", onBook }: ClassCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
   const [gripComplete, setGripComplete] = useState(false);
   const [showWaiver, setShowWaiver] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const gripTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const spotsLeft = studioClass.spotsTotal - studioClass.spotsTaken;
@@ -28,23 +33,34 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
     { key: "subscription", label: "Monthly", price: studioClass.subscriptionPrice, note: "/class" },
   ];
 
+  const selectedTierData = tiers.find((t) => t.key === selectedTier);
+
   const startGrip = useCallback(() => {
     if (!selectedTier || isFull) return;
     setIsGripping(true);
     gripTimer.current = setTimeout(() => {
       setIsGripping(false);
-      setShowWaiver(true); // Show waiver instead of immediately booking
+      setShowWaiver(true);
     }, 1500);
   }, [selectedTier, isFull]);
 
   const handleWaiverSign = useCallback(() => {
     setShowWaiver(false);
+    setShowPayment(true);
+  }, []);
+
+  const handleWaiverCancel = useCallback(() => {
+    setShowWaiver(false);
+  }, []);
+
+  const handlePaymentConfirm = useCallback(() => {
+    setShowPayment(false);
     setGripComplete(true);
     onBook(studioClass.id, selectedTier!);
   }, [studioClass.id, selectedTier, onBook]);
 
-  const handleWaiverCancel = useCallback(() => {
-    setShowWaiver(false);
+  const handlePaymentCancel = useCallback(() => {
+    setShowPayment(false);
   }, []);
 
   const endGrip = useCallback(() => {
@@ -67,7 +83,6 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
         className="w-full text-left p-5 flex items-start gap-5"
         disabled={isFull}
       >
-        {/* Time block */}
         <div className="flex-shrink-0 w-16 text-center">
           <span className="font-body text-xl font-semibold text-foreground">{studioClass.time}</span>
           <div className="flex items-center gap-1 mt-1 justify-center text-muted-foreground">
@@ -76,7 +91,6 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
           </div>
         </div>
 
-        {/* Details */}
         <div className="flex-1 min-w-0">
           <h3 className="font-display text-lg tracking-wide text-foreground">{studioClass.title}</h3>
           <p className="font-body text-sm text-muted-foreground mt-0.5">{studioClass.instructor}</p>
@@ -99,7 +113,6 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
           </div>
         </div>
 
-        {/* Price hint + chevron */}
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <span className="font-body text-sm text-muted-foreground">
             from <span className="text-primary font-semibold">${studioClass.subscriptionPrice}</span>
@@ -126,7 +139,6 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
                 {studioClass.description}
               </p>
 
-              {/* Pricing tiers */}
               <div className="grid grid-cols-3 gap-3 mb-5">
                 {tiers.map((tier) => (
                   <button
@@ -155,7 +167,6 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
                 ))}
               </div>
 
-              {/* Grip booking button */}
               <div className="relative">
                 <button
                   onMouseDown={startGrip}
@@ -173,7 +184,6 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
                         : "bg-secondary text-muted-foreground cursor-not-allowed"
                   )}
                 >
-                  {/* Fill animation */}
                   {isGripping && (
                     <motion.div
                       className="absolute inset-0 grip-fill"
@@ -197,9 +207,25 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
           <WaiverModal
             isOpen={showWaiver}
             classTitle={studioClass.title}
-            tier={selectedTier ? tiers.find(t => t.key === selectedTier)?.label || selectedTier : ""}
+            tier={selectedTierData?.label || ""}
             onSign={handleWaiverSign}
             onCancel={handleWaiverCancel}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPayment && selectedTierData && (
+          <PaymentModal
+            isOpen={showPayment}
+            classTitle={studioClass.title}
+            tier={selectedTierData.label}
+            tierPrice={selectedTierData.price}
+            accessories={accessories}
+            discount={discount}
+            discountCode={discountCode}
+            onConfirm={handlePaymentConfirm}
+            onCancel={handlePaymentCancel}
           />
         )}
       </AnimatePresence>

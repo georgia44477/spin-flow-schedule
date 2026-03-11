@@ -5,7 +5,7 @@ import StudioHeader from "@/components/StudioHeader";
 import DateScrubber from "@/components/DateScrubber";
 import ClassCard from "@/components/ClassCard";
 import AccessoriesDrawer from "@/components/AccessoriesDrawer";
-import { generateSchedule, discountCodes } from "@/data/classes";
+import { generateSchedule, discountCodes, accessories as allAccessories } from "@/data/classes";
 
 const Index = () => {
   const schedule = useMemo(() => generateSchedule(new Date(), 14), []);
@@ -109,7 +109,20 @@ const Index = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: i * 0.08 }}
                 >
-                  <ClassCard studioClass={c} onBook={handleBook} />
+                  <ClassCard
+                    studioClass={c}
+                    onBook={handleBook}
+                    accessories={Object.entries(cart)
+                      .filter(([, qty]) => qty > 0)
+                      .map(([id]) => {
+                        const acc = allAccessories.find((a) => a.id === id);
+                        return acc ? { label: acc.name, price: acc.price } : null;
+                      })
+                      .filter(Boolean) as { label: string; price: number }[]
+                    }
+                    discount={discount}
+                    discountCode={discountCode}
+                  />
                 </motion.div>
               ))}
 
