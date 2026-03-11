@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
 import { Clock, Users, ChevronDown } from "lucide-react";
+import WaiverModal from "@/components/WaiverModal";
 
 interface ClassCardProps {
   studioClass: StudioClass;
