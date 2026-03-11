@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
 import { Clock, Users, ChevronDown } from "lucide-react";
+import WaiverModal from "@/components/WaiverModal";
 
 interface ClassCardProps {
   studioClass: StudioClass;
@@ -14,6 +15,7 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
   const [gripComplete, setGripComplete] = useState(false);
+  const [showWaiver, setShowWaiver] = useState(false);
   const gripTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const spotsLeft = studioClass.spotsTotal - studioClass.spotsTaken;
@@ -30,11 +32,20 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
     if (!selectedTier || isFull) return;
     setIsGripping(true);
     gripTimer.current = setTimeout(() => {
-      setGripComplete(true);
       setIsGripping(false);
-      onBook(studioClass.id, selectedTier);
+      setShowWaiver(true); // Show waiver instead of immediately booking
     }, 1500);
-  }, [selectedTier, isFull, studioClass.id, onBook]);
+  }, [selectedTier, isFull]);
+
+  const handleWaiverSign = useCallback(() => {
+    setShowWaiver(false);
+    setGripComplete(true);
+    onBook(studioClass.id, selectedTier!);
+  }, [studioClass.id, selectedTier, onBook]);
+
+  const handleWaiverCancel = useCallback(() => {
+    setShowWaiver(false);
+  }, []);
 
   const endGrip = useCallback(() => {
     if (gripTimer.current) clearTimeout(gripTimer.current);
@@ -178,6 +189,18 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showWaiver && (
+          <WaiverModal
+            isOpen={showWaiver}
+            classTitle={studioClass.title}
+            tier={selectedTier ? tiers.find(t => t.key === selectedTier)?.label || selectedTier : ""}
+            onSign={handleWaiverSign}
+            onCancel={handleWaiverCancel}
+          />
         )}
       </AnimatePresence>
     </motion.div>
