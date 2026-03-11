@@ -6,11 +6,6 @@ import DateScrubber from "@/components/DateScrubber";
 import ClassCard from "@/components/ClassCard";
 import AccessoriesDrawer from "@/components/AccessoriesDrawer";
 import { generateSchedule, discountCodes, accessories as allAccessories } from "@/data/classes";
-import StudioHeader from "@/components/StudioHeader";
-import DateScrubber from "@/components/DateScrubber";
-import ClassCard from "@/components/ClassCard";
-import AccessoriesDrawer from "@/components/AccessoriesDrawer";
-import { generateSchedule, discountCodes } from "@/data/classes";
 
 const Index = () => {
   const schedule = useMemo(() => generateSchedule(new Date(), 14), []);
