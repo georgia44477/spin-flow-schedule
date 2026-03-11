@@ -15,6 +15,7 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
   const [gripComplete, setGripComplete] = useState(false);
+  const [showWaiver, setShowWaiver] = useState(false);
   const gripTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const spotsLeft = studioClass.spotsTotal - studioClass.spotsTaken;
