@@ -24,7 +24,7 @@ I understand that pole dancing, aerial fitness, and related activities involve i
 I confirm that I am in adequate physical condition to participate in the activities offered. I have disclosed any medical conditions, injuries, or limitations to my instructor prior to class. I understand it is my responsibility to stop participation if I feel pain, discomfort, or dizziness.
 
 3. RELEASE OF LIABILITY
-I hereby release, discharge, and hold harmless Vertigo Pole & Dance Studio, its owners, instructors, employees, and agents from any and all claims, damages, losses, or injuries arising from my participation in studio activities, whether caused by negligence or otherwise.
+I hereby release, discharge, and hold harmless Studio Roxx Pole & Dance Studio, its owners, instructors, employees, and agents from any and all claims, damages, losses, or injuries arising from my participation in studio activities, whether caused by negligence or otherwise.
 
 4. PHOTO & VIDEO CONSENT
 I consent to being photographed or recorded during classes and events for promotional purposes. I may opt out of this at any time by notifying studio management in writing.

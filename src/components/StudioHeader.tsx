@@ -12,7 +12,7 @@ const StudioHeader = () => {
   return (
     <header className="px-6 py-5 flex items-center justify-between border-b border-border/50">
       <Link to="/" className="block">
-        <h1 className="font-display text-2xl tracking-[0.08em] text-foreground">VERTIGO</h1>
+        <h1 className="font-display text-2xl tracking-[0.08em] text-foreground">STUDIO ROXX</h1>
         <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground mt-0.5">
           Pole · Dance · Strength
         </p>
