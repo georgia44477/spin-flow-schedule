@@ -191,6 +191,18 @@ const ClassCard = ({ studioClass, onBook }: ClassCardProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showWaiver && (
+          <WaiverModal
+            isOpen={showWaiver}
+            classTitle={studioClass.title}
+            tier={selectedTier ? tiers.find(t => t.key === selectedTier)?.label || selectedTier : ""}
+            onSign={handleWaiverSign}
+            onCancel={handleWaiverCancel}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
