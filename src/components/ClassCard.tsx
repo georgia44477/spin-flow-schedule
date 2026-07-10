@@ -1,10 +1,14 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
 import { Clock, Users, ChevronDown } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import PaymentModal from "@/components/PaymentModal";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ClassCardProps {
   studioClass: StudioClass;
@@ -15,6 +19,8 @@ interface ClassCardProps {
 }
 
 const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", onBook }: ClassCardProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
