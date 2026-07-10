@@ -8,6 +8,7 @@ import Index from "./pages/Index.tsx";
 import Memberships from "./pages/Memberships.tsx";
 import Auth from "./pages/Auth.tsx";
 import MyBookings from "./pages/MyBookings.tsx";
+import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/memberships" element={<Memberships />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -2,16 +2,19 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const StudioHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
 
   const links = [
     { to: "/", label: "Schedule" },
     { to: "/memberships", label: "Memberships" },
     ...(user ? [{ to: "/my-bookings", label: "My Bookings" }] : []),
+    ...(isAdmin ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   return (
