@@ -397,6 +397,17 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
             accessories={accessories}
             discount={discount}
             discountCode={discountCode}
+            coverage={
+              selectedTier === "subscription" && eligibility.hasActiveSubscription
+                ? { kind: "subscription", renewsOn: eligibility.subscriptionExpiresAt }
+                : selectedTier === "pass" && eligibility.passCreditsRemaining > 0
+                  ? {
+                      kind: "credit",
+                      remainingAfter: eligibility.passCreditsRemaining - 1,
+                      totalCredits: eligibility.totalPassCredits,
+                    }
+                  : { kind: "charge" }
+            }
             onConfirm={handlePaymentConfirm}
             onCancel={handlePaymentCancel}
           />
