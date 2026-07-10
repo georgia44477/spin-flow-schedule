@@ -19,12 +19,14 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+type ClassLevel = "Intro" | "Foundations" | "Intermediate" | "Advanced" | "All Levels";
+
 type ClassRow = {
   id: string;
   title: string;
   instructor: string;
   description: string;
-  level: "beginner" | "intermediate" | "advanced" | "all-levels";
+  level: ClassLevel;
   starts_at: string;
   duration_minutes: number;
   spots_total: number;
@@ -33,12 +35,14 @@ type ClassRow = {
   subscription_price: number;
 };
 
+const LEVELS: ClassLevel[] = ["Intro", "Foundations", "Intermediate", "Advanced", "All Levels"];
+
 const emptyForm = {
   id: "",
   title: "",
   instructor: "",
   description: "",
-  level: "all-levels" as ClassRow["level"],
+  level: "All Levels" as ClassLevel,
   starts_at: new Date().toISOString().slice(0, 16),
   duration_minutes: 60,
   spots_total: 8,
@@ -220,8 +224,7 @@ const Admin = () => {
                         <td className="px-4 py-3">{c.title}</td>
                         <td className="px-4 py-3 text-muted-foreground">{c.instructor}</td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {c.level.replace("-", " ")}
+                            {c.level}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
