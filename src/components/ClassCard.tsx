@@ -111,8 +111,9 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
     setShowPayment(false);
     setGripComplete(true);
     toast.success("Booked!", { description: `${studioClass.title} confirmed.` });
+    eligibility.refresh();
     onBook(studioClass.id, selectedTier);
-  }, [studioClass.id, studioClass.title, selectedTier, selectedTierData, accessories, discount, discountCode, onBook]);
+  }, [studioClass.id, studioClass.title, selectedTier, selectedTierData, accessories, discount, discountCode, onBook, eligibility]);
 
   const handlePaymentCancel = useCallback(() => {
     setShowPayment(false);
