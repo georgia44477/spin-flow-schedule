@@ -9,6 +9,9 @@ import Memberships from "./pages/Memberships.tsx";
 import Auth from "./pages/Auth.tsx";
 import MyBookings from "./pages/MyBookings.tsx";
 import Admin from "./pages/Admin.tsx";
+import ForStudios from "./pages/ForStudios.tsx";
+import StudioSignup from "./pages/StudioSignup.tsx";
+import StudioWelcome from "./pages/StudioWelcome.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -26,6 +29,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/for-studios" element={<ForStudios />} />
+            <Route path="/for-studios/signup" element={<StudioSignup />} />
+            <Route path="/for-studios/welcome" element={<StudioWelcome />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
