@@ -1,14 +1,15 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
-import { Clock, Users, ChevronDown, ShieldCheck, FileWarning } from "lucide-react";
+import { Clock, Users, ChevronDown, ShieldCheck, FileWarning, Sparkles, Ticket, CreditCard } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import PaymentModal from "@/components/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useEligibility } from "@/hooks/useEligibility";
 
 interface ClassCardProps {
   studioClass: StudioClass;
@@ -22,6 +23,7 @@ interface ClassCardProps {
 const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", waiverSigned = false, onBook }: ClassCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const eligibility = useEligibility();
   const [expanded, setExpanded] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
@@ -39,6 +41,19 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
     { key: "pass", label: "Class Pass", price: studioClass.passPrice, note: "10-class pack" },
     { key: "subscription", label: "Monthly", price: studioClass.subscriptionPrice, note: "/class" },
   ];
+
+  const defaultTier = eligibility.hasActiveSubscription
+    ? "subscription"
+    : eligibility.passCreditsRemaining > 0
+      ? "pass"
+      : null;
+
+  // Auto-select best tier once eligibility loads and card expands
+  useEffect(() => {
+    if (expanded && !selectedTier && defaultTier) {
+      setSelectedTier(defaultTier);
+    }
+  }, [expanded, selectedTier, defaultTier]);
 
   const selectedTierData = tiers.find((t) => t.key === selectedTier);
 
@@ -96,8 +111,9 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
     setShowPayment(false);
     setGripComplete(true);
     toast.success("Booked!", { description: `${studioClass.title} confirmed.` });
+    eligibility.refresh();
     onBook(studioClass.id, selectedTier);
-  }, [studioClass.id, studioClass.title, selectedTier, selectedTierData, accessories, discount, discountCode, onBook]);
+  }, [studioClass.id, studioClass.title, selectedTier, selectedTierData, accessories, discount, discountCode, onBook, eligibility]);
 
   const handlePaymentCancel = useCallback(() => {
     setShowPayment(false);
@@ -154,9 +170,19 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
         </div>
 
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="font-body text-sm text-muted-foreground">
-            from <span className="text-primary font-semibold">${studioClass.subscriptionPrice}</span>
-          </span>
+          {user && !eligibility.loading && eligibility.hasActiveSubscription ? (
+            <span className="flex items-center gap-1 font-body text-[10px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-sm bg-primary/15 text-primary">
+              <Sparkles className="w-3 h-3" /> Included
+            </span>
+          ) : user && !eligibility.loading && eligibility.passCreditsRemaining > 0 ? (
+            <span className="flex items-center gap-1 font-body text-[10px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-sm bg-primary/10 text-primary">
+              <Ticket className="w-3 h-3" /> Uses 1 credit
+            </span>
+          ) : (
+            <span className="font-body text-sm text-muted-foreground">
+              from <span className="text-primary font-semibold">${studioClass.subscriptionPrice}</span>
+            </span>
+          )}
           <ChevronDown className={cn(
             "w-4 h-4 text-muted-foreground transition-transform duration-300",
             expanded && "rotate-180"
@@ -225,33 +251,85 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
                 </div>
               )}
 
+              {/* Eligibility banner */}
+              {user && !eligibility.loading && (
+                <div className={cn(
+                  "flex items-center gap-2 mb-4 px-3 py-2 rounded-md text-xs font-body border",
+                  eligibility.hasActiveSubscription
+                    ? "bg-primary/10 text-primary/90 border-primary/20"
+                    : eligibility.passCreditsRemaining > 0
+                      ? "bg-primary/5 text-foreground/80 border-primary/15"
+                      : "bg-secondary/40 text-muted-foreground border-border"
+                )}>
+                  {eligibility.hasActiveSubscription ? (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Monthly membership active
+                      {eligibility.subscriptionExpiresAt && (
+                        <span className="text-muted-foreground">
+                          · renews {eligibility.subscriptionExpiresAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <span className="ml-auto text-primary font-semibold">This class is covered</span>
+                    </>
+                  ) : eligibility.passCreditsRemaining > 0 ? (
+                    <>
+                      <Ticket className="w-3.5 h-3.5 text-primary" />
+                      {eligibility.passCreditsRemaining} of {eligibility.totalPassCredits} pass credits remaining
+                      <span className="ml-auto text-primary font-semibold">Uses 1 credit</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-3.5 h-3.5" />
+                      No active pass or membership · pay per class or buy a pack
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-3 mb-5">
-                {tiers.map((tier) => (
-                  <button
-                    key={tier.key}
-                    onClick={() => setSelectedTier(tier.key)}
-                    className={cn(
-                      "rounded-md p-3 text-center transition-all duration-200 border",
-                      selectedTier === tier.key
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-muted-foreground/40"
-                    )}
-                  >
-                    <span className="font-body text-[10px] tracking-[0.15em] uppercase text-muted-foreground block">
-                      {tier.label}
-                    </span>
-                    <span className={cn(
-                      "font-body text-xl font-bold block mt-1",
-                      selectedTier === tier.key ? "text-primary" : "text-foreground"
-                    )}>
-                      ${tier.price}
-                    </span>
-                    {tier.note && (
-                      <span className="font-body text-[10px] text-muted-foreground block">{tier.note}</span>
-                    )}
-                  </button>
-                ))}
+                {tiers.map((tier) => {
+                  const covered = tier.key === "subscription" && eligibility.hasActiveSubscription;
+                  const usesCredit = tier.key === "pass" && eligibility.passCreditsRemaining > 0;
+                  const suggested = defaultTier === tier.key;
+                  return (
+                    <button
+                      key={tier.key}
+                      onClick={() => setSelectedTier(tier.key)}
+                      className={cn(
+                        "relative rounded-md p-3 text-center transition-all duration-200 border",
+                        selectedTier === tier.key
+                          ? "border-primary bg-primary/10"
+                          : suggested
+                            ? "border-primary/40 hover:border-primary/60"
+                            : "border-border hover:border-muted-foreground/40"
+                      )}
+                    >
+                      {suggested && selectedTier !== tier.key && (
+                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-sm bg-primary text-primary-foreground font-body text-[8px] tracking-[0.15em] uppercase">
+                          Best
+                        </span>
+                      )}
+                      <span className="font-body text-[10px] tracking-[0.15em] uppercase text-muted-foreground block">
+                        {tier.label}
+                      </span>
+                      <span className={cn(
+                        "font-body text-xl font-bold block mt-1",
+                        (covered || usesCredit) && "line-through opacity-60 text-muted-foreground",
+                        selectedTier === tier.key && !(covered || usesCredit) ? "text-primary" : "text-foreground"
+                      )}>
+                        ${tier.price}
+                      </span>
+                      {covered ? (
+                        <span className="font-body text-[10px] text-primary block mt-0.5">Included</span>
+                      ) : usesCredit ? (
+                        <span className="font-body text-[10px] text-primary block mt-0.5">1 credit</span>
+                      ) : tier.note ? (
+                        <span className="font-body text-[10px] text-muted-foreground block">{tier.note}</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="relative">
@@ -280,7 +358,15 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
                     />
                   )}
                   <span className="relative z-10">
-                    {gripComplete ? "Booked ✓" : selectedTier ? "Hold to confirm" : "Select a tier"}
+                    {gripComplete
+                      ? "Booked ✓"
+                      : !selectedTier
+                        ? "Select a tier"
+                        : selectedTier === "subscription" && eligibility.hasActiveSubscription
+                          ? "Hold to book — included"
+                          : selectedTier === "pass" && eligibility.passCreditsRemaining > 0
+                            ? "Hold to use 1 credit"
+                            : "Hold to confirm"}
                   </span>
                 </button>
               </div>
