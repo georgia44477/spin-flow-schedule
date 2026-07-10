@@ -1,14 +1,15 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
-import { Clock, Users, ChevronDown, ShieldCheck, FileWarning } from "lucide-react";
+import { Clock, Users, ChevronDown, ShieldCheck, FileWarning, Sparkles, Ticket, CreditCard } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import PaymentModal from "@/components/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useEligibility } from "@/hooks/useEligibility";
 
 interface ClassCardProps {
   studioClass: StudioClass;
@@ -22,6 +23,7 @@ interface ClassCardProps {
 const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", waiverSigned = false, onBook }: ClassCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const eligibility = useEligibility();
   const [expanded, setExpanded] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
@@ -39,6 +41,19 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
     { key: "pass", label: "Class Pass", price: studioClass.passPrice, note: "10-class pack" },
     { key: "subscription", label: "Monthly", price: studioClass.subscriptionPrice, note: "/class" },
   ];
+
+  const defaultTier = eligibility.hasActiveSubscription
+    ? "subscription"
+    : eligibility.passCreditsRemaining > 0
+      ? "pass"
+      : null;
+
+  // Auto-select best tier once eligibility loads and card expands
+  useEffect(() => {
+    if (expanded && !selectedTier && defaultTier) {
+      setSelectedTier(defaultTier);
+    }
+  }, [expanded, selectedTier, defaultTier]);
 
   const selectedTierData = tiers.find((t) => t.key === selectedTier);
 
