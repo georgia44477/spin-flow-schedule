@@ -162,6 +162,45 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_leads: {
+        Row: {
+          billing_cycle: string
+          city: string | null
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          owner_name: string
+          plan_tier: string
+          status: string
+          studio_name: string
+        }
+        Insert: {
+          billing_cycle?: string
+          city?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          owner_name: string
+          plan_tier: string
+          status?: string
+          studio_name: string
+        }
+        Update: {
+          billing_cycle?: string
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          owner_name?: string
+          plan_tier?: string
+          status?: string
+          studio_name?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
