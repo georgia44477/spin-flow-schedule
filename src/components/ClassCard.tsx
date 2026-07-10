@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
-import { Clock, Users, ChevronDown } from "lucide-react";
+import { Clock, Users, ChevronDown, ShieldCheck, FileWarning } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import PaymentModal from "@/components/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +15,11 @@ interface ClassCardProps {
   accessories?: { label: string; price: number }[];
   discount?: number;
   discountCode?: string;
+  waiverSigned?: boolean;
   onBook: (classId: string, tier: string) => void;
 }
 
-const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", onBook }: ClassCardProps) => {
+const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", waiverSigned = false, onBook }: ClassCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
@@ -174,9 +175,56 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 border-t border-border/50">
-              <p className="font-body text-sm text-muted-foreground mt-4 mb-5 leading-relaxed">
+              <p className="font-body text-sm text-muted-foreground mt-4 mb-4 leading-relaxed">
                 {studioClass.description}
               </p>
+
+              {/* Capacity bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-body text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
+                    Capacity
+                  </span>
+                  <span className={cn(
+                    "font-body text-xs",
+                    isFull ? "text-accent" : isLow ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {studioClass.spotsTaken} / {studioClass.spotsTotal} booked
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full transition-all",
+                      isFull ? "bg-accent" : isLow ? "bg-primary" : "bg-primary/60"
+                    )}
+                    style={{ width: `${Math.min(100, (studioClass.spotsTaken / studioClass.spotsTotal) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Waiver status */}
+              {user && (
+                <div className={cn(
+                  "flex items-center gap-2 mb-4 px-3 py-2 rounded-md text-xs font-body",
+                  waiverSigned
+                    ? "bg-primary/10 text-primary/90 border border-primary/20"
+                    : "bg-accent/10 text-accent border border-accent/20"
+                )}>
+                  {waiverSigned ? (
+                    <>
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Waiver on file — you'll go straight to payment
+                    </>
+                  ) : (
+                    <>
+                      <FileWarning className="w-3.5 h-3.5" />
+                      One-time waiver required before your first booking
+                    </>
+                  )}
+                </div>
+              )}
+
 
               <div className="grid grid-cols-3 gap-3 mb-5">
                 {tiers.map((tier) => (
