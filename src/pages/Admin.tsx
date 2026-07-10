@@ -224,6 +224,7 @@ const Admin = () => {
                         <td className="px-4 py-3">{c.title}</td>
                         <td className="px-4 py-3 text-muted-foreground">{c.instructor}</td>
                         <td className="px-4 py-3">
+                          <Badge variant="outline" className="text-xs">
                             {c.level}
                           </Badge>
                         </td>
