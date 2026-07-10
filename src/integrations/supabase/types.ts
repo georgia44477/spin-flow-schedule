@@ -14,16 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          price: number
+          status: Database["public"]["Enums"]["booking_status"]
+          tier: Database["public"]["Enums"]["booking_tier"]
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          price: number
+          status?: Database["public"]["Enums"]["booking_status"]
+          tier: Database["public"]["Enums"]["booking_tier"]
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          price?: number
+          status?: Database["public"]["Enums"]["booking_status"]
+          tier?: Database["public"]["Enums"]["booking_tier"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          created_at: string
+          description: string
+          drop_in_price: number
+          duration_minutes: number
+          id: string
+          instructor: string
+          level: Database["public"]["Enums"]["class_level"]
+          pass_price: number
+          spots_total: number
+          starts_at: string
+          subscription_price: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          drop_in_price: number
+          duration_minutes: number
+          id?: string
+          instructor: string
+          level: Database["public"]["Enums"]["class_level"]
+          pass_price: number
+          spots_total: number
+          starts_at: string
+          subscription_price: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          drop_in_price?: number
+          duration_minutes?: number
+          id?: string
+          instructor?: string
+          level?: Database["public"]["Enums"]["class_level"]
+          pass_price?: number
+          spots_total?: number
+          starts_at?: string
+          subscription_price?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          discount_code: string | null
+          discount_percent: number | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          discount_code?: string | null
+          discount_percent?: number | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          discount_code?: string | null
+          discount_percent?: number | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          waiver_signed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+          waiver_signed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          waiver_signed_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      book_class: {
+        Args: {
+          _class_id: string
+          _discount_code?: string
+          _discount_percent?: number
+          _tier: Database["public"]["Enums"]["booking_tier"]
+          _total_amount: number
+        }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "instructor" | "student"
+      booking_status: "confirmed" | "cancelled"
+      booking_tier: "drop-in" | "pass" | "subscription"
+      class_level:
+        | "Intro"
+        | "Foundations"
+        | "Intermediate"
+        | "Advanced"
+        | "All Levels"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +339,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "instructor", "student"],
+      booking_status: ["confirmed", "cancelled"],
+      booking_tier: ["drop-in", "pass", "subscription"],
+      class_level: [
+        "Intro",
+        "Foundations",
+        "Intermediate",
+        "Advanced",
+        "All Levels",
+      ],
+    },
   },
 } as const
