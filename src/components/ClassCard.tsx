@@ -170,9 +170,19 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
         </div>
 
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="font-body text-sm text-muted-foreground">
-            from <span className="text-primary font-semibold">${studioClass.subscriptionPrice}</span>
-          </span>
+          {user && !eligibility.loading && eligibility.hasActiveSubscription ? (
+            <span className="flex items-center gap-1 font-body text-[10px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-sm bg-primary/15 text-primary">
+              <Sparkles className="w-3 h-3" /> Included
+            </span>
+          ) : user && !eligibility.loading && eligibility.passCreditsRemaining > 0 ? (
+            <span className="flex items-center gap-1 font-body text-[10px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-sm bg-primary/10 text-primary">
+              <Ticket className="w-3 h-3" /> Uses 1 credit
+            </span>
+          ) : (
+            <span className="font-body text-sm text-muted-foreground">
+              from <span className="text-primary font-semibold">${studioClass.subscriptionPrice}</span>
+            </span>
+          )}
           <ChevronDown className={cn(
             "w-4 h-4 text-muted-foreground transition-transform duration-300",
             expanded && "rotate-180"
