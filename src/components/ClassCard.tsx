@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
-import { Clock, Users, ChevronDown } from "lucide-react";
+import { Clock, Users, ChevronDown, ShieldCheck, FileWarning } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import PaymentModal from "@/components/PaymentModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +15,11 @@ interface ClassCardProps {
   accessories?: { label: string; price: number }[];
   discount?: number;
   discountCode?: string;
+  waiverSigned?: boolean;
   onBook: (classId: string, tier: string) => void;
 }
 
-const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", onBook }: ClassCardProps) => {
+const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", waiverSigned = false, onBook }: ClassCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
