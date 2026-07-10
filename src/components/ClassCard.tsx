@@ -1,10 +1,14 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { StudioClass } from "@/data/classes";
 import { cn } from "@/lib/utils";
 import { Clock, Users, ChevronDown } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import PaymentModal from "@/components/PaymentModal";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ClassCardProps {
   studioClass: StudioClass;
@@ -15,6 +19,8 @@ interface ClassCardProps {
 }
 
 const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode = "", onBook }: ClassCardProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
@@ -37,12 +43,27 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
 
   const startGrip = useCallback(() => {
     if (!selectedTier || isFull) return;
+    if (!user) {
+      toast.info("Sign in to book a class");
+      navigate("/auth");
+      return;
+    }
     setIsGripping(true);
-    gripTimer.current = setTimeout(() => {
+    gripTimer.current = setTimeout(async () => {
       setIsGripping(false);
-      setShowWaiver(true);
+      // Check if user has signed the waiver before
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("waiver_signed_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile?.waiver_signed_at) {
+        setShowPayment(true);
+      } else {
+        setShowWaiver(true);
+      }
     }, 1500);
-  }, [selectedTier, isFull]);
+  }, [selectedTier, isFull, user, navigate]);
 
   const handleWaiverSign = useCallback(() => {
     setShowWaiver(false);
@@ -53,11 +74,29 @@ const ClassCard = ({ studioClass, accessories = [], discount = 0, discountCode =
     setShowWaiver(false);
   }, []);
 
-  const handlePaymentConfirm = useCallback(() => {
+  const handlePaymentConfirm = useCallback(async () => {
+    if (!selectedTierData || !selectedTier) return;
+    const accessoriesTotal = accessories.reduce((s, a) => s + a.price, 0);
+    const total = selectedTierData.price + accessoriesTotal - accessoriesTotal * (discount / 100);
+
+    const { error } = await supabase.rpc("book_class", {
+      _class_id: studioClass.id,
+      _tier: selectedTier as "drop-in" | "pass" | "subscription",
+      _total_amount: total,
+      _discount_code: discountCode || null,
+      _discount_percent: discount || 0,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setShowPayment(false);
+      return;
+    }
     setShowPayment(false);
     setGripComplete(true);
-    onBook(studioClass.id, selectedTier!);
-  }, [studioClass.id, selectedTier, onBook]);
+    toast.success("Booked!", { description: `${studioClass.title} confirmed.` });
+    onBook(studioClass.id, selectedTier);
+  }, [studioClass.id, studioClass.title, selectedTier, selectedTierData, accessories, discount, discountCode, onBook]);
 
   const handlePaymentCancel = useCallback(() => {
     setShowPayment(false);
