@@ -12,6 +12,7 @@ import Admin from "./pages/Admin.tsx";
 import ForStudios from "./pages/ForStudios.tsx";
 import StudioSignup from "./pages/StudioSignup.tsx";
 import StudioWelcome from "./pages/StudioWelcome.tsx";
+import OAuthConsent from "./pages/OAuthConsent.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/for-studios" element={<ForStudios />} />
             <Route path="/for-studios/signup" element={<StudioSignup />} />
             <Route path="/for-studios/welcome" element={<StudioWelcome />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

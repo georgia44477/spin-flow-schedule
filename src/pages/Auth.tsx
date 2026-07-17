@@ -1,13 +1,22 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
+// Only accept same-origin relative paths.
+const safeNext = (raw: string | null) => {
+  if (!raw) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+};
+
 const Auth = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
   const { user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -16,19 +25,27 @@ const Auth = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) navigate("/", { replace: true });
-  }, [user, authLoading, navigate]);
+    if (!authLoading && user) {
+      // Use full navigation for external paths like /.lovable/oauth/consent
+      if (next.startsWith("/.")) {
+        window.location.href = next;
+      } else {
+        navigate(next, { replace: true });
+      }
+    }
+  }, [user, authLoading, navigate, next]);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
+      const redirectUrl = window.location.origin + next;
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: redirectUrl,
             data: { display_name: displayName || email.split("@")[0] },
           },
         });
@@ -39,7 +56,11 @@ const Auth = () => {
         if (error) throw error;
         toast.success("Signed in");
       }
-      navigate("/", { replace: true });
+      if (next.startsWith("/.")) {
+        window.location.href = next;
+      } else {
+        navigate(next, { replace: true });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       toast.error(msg);
@@ -52,11 +73,15 @@ const Auth = () => {
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: window.location.origin + next,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate("/", { replace: true });
+      if (next.startsWith("/.")) {
+        window.location.href = next;
+      } else {
+        navigate(next, { replace: true });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Google sign in failed";
       toast.error(msg);
