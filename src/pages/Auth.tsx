@@ -73,9 +73,9 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <Link to="/" className="block text-center mb-8">
-          <h1 className="font-display text-3xl tracking-[0.08em] text-foreground">STUDIO ROXX</h1>
+          <h1 className="font-display text-3xl tracking-[0.08em] text-foreground">STUDIO SCHEDULER</h1>
           <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground mt-1">
-            Pole · Dance · Strength
+            Book · Move · Belong
           </p>
         </Link>
 
