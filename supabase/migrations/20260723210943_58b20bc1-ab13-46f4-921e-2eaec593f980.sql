@@ -1,0 +1,1 @@
+UPDATE public.studio_settings SET studio_name = 'Studio Scheduler', tagline = 'Book · Move · Belong' WHERE id = 1 AND studio_name = 'Studio Roxx';
