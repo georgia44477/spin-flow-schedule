@@ -37,7 +37,7 @@ I consent to being photographed or recorded during classes and events for promot
 - I will treat all studio equipment with care and report any damage immediately
 
 6. CANCELLATION POLICY
-Classes must be cancelled at least 4 hours in advance. Late cancellations and no-shows will result in forfeiture of the class credit or drop-in fee.
+Please cancel your reservation at least 4 hours in advance so another student can take the spot. Repeated late cancellations or no-shows may affect your ability to reserve future classes.
 
 7. MEDICAL EMERGENCY
 In the event of a medical emergency, I authorize studio staff to contact emergency services and provide first aid as needed. Emergency contact information will be kept on file.
