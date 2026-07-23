@@ -97,6 +97,75 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_codes: {
+        Row: {
+          code: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          max_redemptions: number | null
+          percent_off: number
+          starts_at: string | null
+          times_redeemed: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          percent_off: number
+          starts_at?: string | null
+          times_redeemed?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          percent_off?: number
+          starts_at?: string | null
+          times_redeemed?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      instructors: {
+        Row: {
+          bio: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -162,42 +231,39 @@ export type Database = {
         }
         Relationships: []
       }
-      studio_leads: {
+      studio_settings: {
         Row: {
-          billing_cycle: string
-          city: string | null
-          created_at: string
-          email: string
-          id: string
-          notes: string | null
-          owner_name: string
-          plan_tier: string
-          status: string
+          contact_email: string | null
+          hero_image_url: string | null
+          id: number
+          logo_url: string | null
+          primary_color: string | null
           studio_name: string
+          tagline: string | null
+          timezone: string
+          updated_at: string
         }
         Insert: {
-          billing_cycle?: string
-          city?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          notes?: string | null
-          owner_name: string
-          plan_tier: string
-          status?: string
-          studio_name: string
+          contact_email?: string | null
+          hero_image_url?: string | null
+          id?: number
+          logo_url?: string | null
+          primary_color?: string | null
+          studio_name?: string
+          tagline?: string | null
+          timezone?: string
+          updated_at?: string
         }
         Update: {
-          billing_cycle?: string
-          city?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          notes?: string | null
-          owner_name?: string
-          plan_tier?: string
-          status?: string
+          contact_email?: string | null
+          hero_image_url?: string | null
+          id?: number
+          logo_url?: string | null
+          primary_color?: string | null
           studio_name?: string
+          tagline?: string | null
+          timezone?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -228,11 +294,24 @@ export type Database = {
         Args: {
           _class_id: string
           _discount_code?: string
-          _discount_percent?: number
           _tier: Database["public"]["Enums"]["booking_tier"]
-          _total_amount: number
         }
         Returns: string
+      }
+      check_discount_code: {
+        Args: { _code: string }
+        Returns: {
+          percent_off: number
+          reason: string
+          valid: boolean
+        }[]
+      }
+      class_availability: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          class_id: string
+          confirmed_count: number
+        }[]
       }
       has_role: {
         Args: {
