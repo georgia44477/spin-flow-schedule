@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
+# Studio Roxx — Pole studio scheduler
 
-## Project info
+A lightweight, single-tenant class scheduling app for a pole / dance / fitness
+studio. Students browse the class calendar, reserve a spot, and pay at the
+studio when they arrive. Staff manage the schedule, discount codes,
+instructors, and studio branding from a built-in admin dashboard.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## What it does
 
-## How can I edit this code?
+- **Public schedule** — anyone can browse the class calendar, filter by
+  level, instructor, or time of day, and see live spots-remaining counts.
+- **Reservation flow** — signed-in students hold-to-reserve a class,
+  optionally apply a discount code, and confirm. Pricing is set by the
+  studio and enforced server-side.
+- **Pay at the studio** — no card processing in the app. Students bring
+  cash, card, or their active pass / membership when they check in.
+- **Waivers** — a one-time signed waiver is captured on the first booking.
+- **My bookings** — students see upcoming and past reservations and can
+  cancel (which frees the spot for someone else).
+- **Admin dashboard** — CRUD for classes, discount codes, instructors, and
+  studio settings (name, tagline, logo, colors, timezone).
+- **Embed mode** — drop the schedule into another site with an iframe.
+  See [docs/EMBED.md](./docs/EMBED.md).
 
-There are several ways of editing your application.
+## Tech stack
 
-**Use Lovable**
+- Vite + React + TypeScript + Tailwind + shadcn/ui + framer-motion
+- Lovable Cloud (Postgres + auth + storage) for the backend
+- Vitest for unit tests
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Local development
 
-Changes made via Lovable will be committed automatically to this repo.
+The app runs at `http://localhost:8080` inside the Lovable sandbox — no
+setup required. If you're cloning this to run outside Lovable:
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+bun install
+bun run dev
 ```
 
-**Edit a file directly in GitHub**
+## Running tests
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+bun run test          # single run
+bun run test:watch    # watch mode
+```
 
-**Use GitHub Codespaces**
+## Roles
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Roles live in the `user_roles` table (never on the profiles table).
+Two roles exist today: `student` (default) and `admin`. Grant `admin` by
+inserting into `user_roles` from the backend.
 
-## What technologies are used for this project?
+## Payments — currently deferred
 
-This project is built with:
+The app intentionally does not process online payments. All money changes
+hands at the studio. A future Track B is planned to add card-on-file and
+online purchases for passes and memberships.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Repository layout
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```
+src/
+  components/    UI (ClassCard, PaymentModal, WaiverModal, calendars, …)
+  hooks/         useAuth, useIsAdmin, useStudioSettings
+  lib/schedule.ts   Pure schedule-building helpers (unit tested)
+  pages/         Index (schedule), Auth, MyBookings, Admin, Memberships
+supabase/
+  migrations/    Schema, RLS, and RPCs
+docs/            EMBED.md and other operator docs
+```

@@ -6,7 +6,6 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
-// Only accept same-origin relative paths.
 const safeNext = (raw: string | null) => {
   if (!raw) return "/";
   if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
@@ -25,14 +24,7 @@ const Auth = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      // Use full navigation for external paths like /.lovable/oauth/consent
-      if (next.startsWith("/.")) {
-        window.location.href = next;
-      } else {
-        navigate(next, { replace: true });
-      }
-    }
+    if (!authLoading && user) navigate(next, { replace: true });
   }, [user, authLoading, navigate, next]);
 
   const handleEmail = async (e: React.FormEvent) => {
@@ -50,20 +42,15 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("Account created", { description: "Welcome to Studio Roxx" });
+        toast.success("Account created");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in");
       }
-      if (next.startsWith("/.")) {
-        window.location.href = next;
-      } else {
-        navigate(next, { replace: true });
-      }
+      navigate(next, { replace: true });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -72,19 +59,12 @@ const Auth = () => {
   const handleGoogle = async () => {
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + next,
-      });
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + next });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      if (next.startsWith("/.")) {
-        window.location.href = next;
-      } else {
-        navigate(next, { replace: true });
-      }
+      navigate(next, { replace: true });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Google sign in failed";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "Google sign in failed");
       setBusy(false);
     }
   };
