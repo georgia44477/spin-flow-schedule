@@ -1,90 +1,58 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { CreditCard, Lock, ShoppingBag, Check, ChevronRight, Sparkles, Ticket } from "lucide-react";
-
-interface CartItem {
-  label: string;
-  price: number;
-}
-
-export type BookingCoverage =
-  | { kind: "subscription"; renewsOn: Date | null }
-  | { kind: "credit"; remainingAfter: number; totalCredits: number }
-  | { kind: "charge" };
+import { Check, ChevronRight, Ticket, Loader2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentModalProps {
   isOpen: boolean;
   classTitle: string;
   tier: string;
   tierPrice: number;
-  accessories?: CartItem[];
-  discount?: number;
-  discountCode?: string;
-  coverage?: BookingCoverage;
-  onConfirm: () => void;
+  onConfirm: (discountCode: string | null) => void | Promise<void>;
   onCancel: () => void;
 }
 
-const PaymentModal = ({
-  isOpen,
-  classTitle,
-  tier,
-  tierPrice,
-  accessories = [],
-  discount = 0,
-  discountCode = "",
-  coverage = { kind: "charge" },
-  onConfirm,
-  onCancel,
-}: PaymentModalProps) => {
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
-  const [cardName, setCardName] = useState("");
+const PaymentModal = ({ isOpen, classTitle, tier, tierPrice, onConfirm, onCancel }: PaymentModalProps) => {
+  const [code, setCode] = useState("");
+  const [applied, setApplied] = useState<{ code: string; percent: number } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [isGripping, setIsGripping] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const gripTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const accessoriesTotal = accessories.reduce((sum, a) => sum + a.price, 0);
-  const classCharge = coverage.kind === "charge" ? tierPrice : 0;
-  const subtotal = classCharge + accessoriesTotal;
-  const discountAmount = accessoriesTotal * (discount / 100);
-  const total = subtotal - discountAmount;
-  const requiresCard = total > 0;
+  const percentOff = applied?.percent ?? 0;
+  const discountAmount = tierPrice * (percentOff / 100);
+  const total = Math.max(0, tierPrice - discountAmount);
 
-  const formatCardNumber = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-  };
-  const formatExpiry = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 4);
-    if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return digits;
-  };
-
-  const validate = (): boolean => {
-    if (!requiresCard) return true;
-    const errs: Record<string, string> = {};
-    const digits = cardNumber.replace(/\s/g, "");
-    if (digits.length < 13 || digits.length > 16) errs.cardNumber = "Invalid card number";
-    if (cardExpiry.length < 5) errs.cardExpiry = "Invalid expiry";
-    if (cardCvc.length < 3) errs.cardCvc = "Invalid CVC";
-    if (cardName.trim().length < 2) errs.cardName = "Name required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const applyCode = useCallback(async () => {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setChecking(true);
+    setCodeError(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)("check_discount_code", { _code: trimmed });
+    setChecking(false);
+    if (error) { setCodeError(error.message); return; }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row?.valid) {
+      setApplied({ code: trimmed, percent: row.percent_off });
+      setCodeError(null);
+    } else {
+      setApplied(null);
+      setCodeError(row?.reason || "Invalid code");
+    }
+  }, [code]);
 
   const startGrip = useCallback(() => {
-    if (!validate()) return;
     setIsGripping(true);
-    gripTimer.current = setTimeout(() => {
-      setConfirmed(true);
+    gripTimer.current = setTimeout(async () => {
       setIsGripping(false);
-      setTimeout(() => onConfirm(), 800);
+      setConfirmed(true);
+      await onConfirm(applied?.code ?? null);
     }, 1500);
-  }, [cardNumber, cardExpiry, cardCvc, cardName, onConfirm, requiresCard]);
+  }, [applied, onConfirm]);
 
   const endGrip = useCallback(() => {
     if (gripTimer.current) clearTimeout(gripTimer.current);
@@ -92,61 +60,6 @@ const PaymentModal = ({
   }, []);
 
   if (!isOpen) return null;
-
-  const CoverageBanner = () => {
-    if (coverage.kind === "subscription") {
-      return (
-        <div className="rounded-md border border-primary/30 bg-primary/10 p-4">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-body text-xs tracking-[0.2em] uppercase text-primary">
-              Covered by monthly membership
-            </span>
-          </div>
-          <p className="font-body text-sm text-foreground/80">
-            Your class fee is <span className="font-semibold">included</span> — no charge for this booking.
-            {coverage.renewsOn && (
-              <span className="text-muted-foreground">
-                {" "}Membership renews{" "}
-                {coverage.renewsOn.toLocaleDateString(undefined, { month: "short", day: "numeric" })}.
-              </span>
-            )}
-          </p>
-        </div>
-      );
-    }
-    if (coverage.kind === "credit") {
-      return (
-        <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Ticket className="w-4 h-4 text-primary" />
-            <span className="font-body text-xs tracking-[0.2em] uppercase text-primary">
-              1 class pass credit
-            </span>
-          </div>
-          <p className="font-body text-sm text-foreground/80">
-            Using <span className="font-semibold">1 credit</span> from your class pack.{" "}
-            <span className="text-muted-foreground">
-              {coverage.remainingAfter} of {coverage.totalCredits} credits will remain.
-            </span>
-          </p>
-        </div>
-      );
-    }
-    return (
-      <div className="rounded-md border border-border bg-secondary/40 p-4">
-        <div className="flex items-center gap-2 mb-1.5">
-          <CreditCard className="w-4 h-4 text-muted-foreground" />
-          <span className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground">
-            Drop-in payment
-          </span>
-        </div>
-        <p className="font-body text-sm text-foreground/80">
-          You'll be charged for this class today. Buy a class pack or membership to save on future bookings.
-        </p>
-      </div>
-    );
-  };
 
   return (
     <motion.div
@@ -167,20 +80,23 @@ const PaymentModal = ({
         <div className="px-6 py-5 border-b border-border/50">
           <div className="flex items-center gap-3 mb-1">
             <Check className="w-5 h-5 text-primary" />
-            <h3 className="font-display text-xl tracking-wide text-foreground">Confirm your booking</h3>
+            <h3 className="font-display text-xl tracking-wide text-foreground">Reserve your spot</h3>
           </div>
           <p className="font-body text-sm text-muted-foreground">
-            Review how this class will be {coverage.kind === "charge" ? "charged" : "applied"} before you finalize.
+            Confirm your reservation — you'll pay at the studio when you arrive.
           </p>
         </div>
 
-        <div className="px-6 py-5 space-y-6">
-          <CoverageBanner />
+        <div className="px-6 py-5 space-y-5">
+          <div className="rounded-md border border-primary/20 bg-primary/5 p-4">
+            <p className="font-body text-xs tracking-[0.2em] uppercase text-primary mb-1">Pay at studio</p>
+            <p className="font-body text-sm text-foreground/80">
+              No card required now. Bring cash, card, or an active class pass / membership when you check in.
+            </p>
+          </div>
 
           <div>
-            <h4 className="font-body text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">
-              Booking details
-            </h4>
+            <h4 className="font-body text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">Reservation</h4>
             <div className="bg-secondary/50 rounded-md p-4 space-y-2.5">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 min-w-0">
@@ -190,125 +106,63 @@ const PaymentModal = ({
                     {tier}
                   </span>
                 </div>
-                {coverage.kind === "subscription" ? (
-                  <span className="font-body text-xs text-primary uppercase tracking-wider">Included</span>
-                ) : coverage.kind === "credit" ? (
-                  <span className="font-body text-xs text-primary uppercase tracking-wider">1 credit</span>
-                ) : (
-                  <span className="font-body text-sm font-semibold text-foreground">${tierPrice.toFixed(2)}</span>
-                )}
+                <span className="font-body text-sm font-semibold text-foreground">${tierPrice.toFixed(2)}</span>
               </div>
 
-              {accessories.map((item, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-3 h-3 text-muted-foreground" />
-                    <span className="font-body text-sm text-foreground/70">{item.label}</span>
-                  </div>
-                  <span className="font-body text-sm text-foreground/70">${item.price.toFixed(2)}</span>
-                </div>
-              ))}
-
-              {discount > 0 && (
+              {applied && (
                 <div className="flex justify-between items-center pt-1 border-t border-border/30">
-                  <span className="font-body text-sm text-primary">
-                    Discount ({discountCode} −{discount}%)
+                  <span className="font-body text-sm text-primary flex items-center gap-1.5">
+                    <Ticket className="w-3.5 h-3.5" /> {applied.code} · −{applied.percent}%
                   </span>
                   <span className="font-body text-sm text-primary">−${discountAmount.toFixed(2)}</span>
                 </div>
               )}
 
               <div className="flex justify-between items-center pt-2 border-t border-border/50">
-                <span className="font-body text-sm font-semibold text-foreground">
-                  {requiresCard ? "Charged today" : "Due today"}
-                </span>
+                <span className="font-body text-sm font-semibold text-foreground">Due at studio</span>
                 <span className="font-body text-xl font-bold text-primary">${total.toFixed(2)}</span>
               </div>
-              {!requiresCard && (
-                <p className="font-body text-[11px] text-muted-foreground pt-1">
-                  No card will be charged for this booking.
-                </p>
-              )}
             </div>
           </div>
 
-          {requiresCard && (
-            <div>
-              <h4 className="font-body text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">
-                Card Details
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <input
-                    value={cardName}
-                    onChange={(e) => { setCardName(e.target.value); setErrors((p) => ({ ...p, cardName: "" })); }}
-                    placeholder="Name on card"
-                    maxLength={100}
-                    className={cn(
-                      "w-full font-body text-sm bg-secondary border rounded-md px-4 py-3 text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors",
-                      errors.cardName ? "border-accent" : "border-border focus:border-primary/40"
-                    )}
-                  />
-                  {errors.cardName && <p className="font-body text-xs text-accent mt-1">{errors.cardName}</p>}
-                </div>
-
-                <div>
-                  <div className="relative">
-                    <input
-                      value={cardNumber}
-                      onChange={(e) => { setCardNumber(formatCardNumber(e.target.value)); setErrors((p) => ({ ...p, cardNumber: "" })); }}
-                      placeholder="4242 4242 4242 4242"
-                      maxLength={19}
-                      className={cn(
-                        "w-full font-body text-sm bg-secondary border rounded-md pl-4 pr-12 py-3 text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors tracking-wider",
-                        errors.cardNumber ? "border-accent" : "border-border focus:border-primary/40"
-                      )}
-                    />
-                    <CreditCard className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-                  </div>
-                  {errors.cardNumber && <p className="font-body text-xs text-accent mt-1">{errors.cardNumber}</p>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <input
-                      value={cardExpiry}
-                      onChange={(e) => { setCardExpiry(formatExpiry(e.target.value)); setErrors((p) => ({ ...p, cardExpiry: "" })); }}
-                      placeholder="MM/YY"
-                      maxLength={5}
-                      className={cn(
-                        "w-full font-body text-sm bg-secondary border rounded-md px-4 py-3 text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors tracking-wider",
-                        errors.cardExpiry ? "border-accent" : "border-border focus:border-primary/40"
-                      )}
-                    />
-                    {errors.cardExpiry && <p className="font-body text-xs text-accent mt-1">{errors.cardExpiry}</p>}
-                  </div>
-                  <div>
-                    <input
-                      value={cardCvc}
-                      onChange={(e) => { setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4)); setErrors((p) => ({ ...p, cardCvc: "" })); }}
-                      placeholder="CVC"
-                      maxLength={4}
-                      className={cn(
-                        "w-full font-body text-sm bg-secondary border rounded-md px-4 py-3 text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors tracking-wider",
-                        errors.cardCvc ? "border-accent" : "border-border focus:border-primary/40"
-                      )}
-                    />
-                    {errors.cardCvc && <p className="font-body text-xs text-accent mt-1">{errors.cardCvc}</p>}
-                  </div>
-                </div>
+          <div>
+            <label className="font-body text-[10px] tracking-[0.2em] uppercase text-muted-foreground block mb-2">
+              Discount code (optional)
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value.toUpperCase()); setCodeError(null); }}
+                  placeholder="ENTER CODE"
+                  maxLength={40}
+                  disabled={!!applied}
+                  className={cn(
+                    "w-full font-body text-sm bg-secondary border rounded-md px-4 py-3 text-foreground placeholder:text-muted-foreground/40 outline-none tracking-widest",
+                    codeError ? "border-accent" : "border-border focus:border-primary/40",
+                    applied && "opacity-70"
+                  )}
+                />
+                {applied && (
+                  <button
+                    onClick={() => { setApplied(null); setCode(""); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-accent"
+                    aria-label="Remove code"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
+              <button
+                onClick={applyCode}
+                disabled={checking || !code.trim() || !!applied}
+                className="px-4 py-3 rounded-md bg-primary/15 border border-primary/30 font-body text-xs tracking-[0.15em] uppercase text-primary disabled:opacity-50"
+              >
+                {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+              </button>
             </div>
-          )}
-
-          {requiresCard && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-secondary/50">
-              <Lock className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-              <span className="font-body text-[11px] text-muted-foreground">
-                Encrypted & secure. Your card details are never stored.
-              </span>
-            </div>
-          )}
+            {codeError && <p className="font-body text-xs text-accent mt-1.5">{codeError}</p>}
+          </div>
 
           <div className="flex items-center gap-3">
             <button
@@ -317,7 +171,6 @@ const PaymentModal = ({
             >
               Cancel
             </button>
-
             <button
               onMouseDown={startGrip}
               onMouseUp={endGrip}
@@ -341,18 +194,7 @@ const PaymentModal = ({
                 />
               )}
               <span className="relative z-10 flex items-center justify-center gap-2">
-                {confirmed ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Booking confirmed
-                  </>
-                ) : coverage.kind === "subscription" ? (
-                  "Hold to confirm — no charge"
-                ) : coverage.kind === "credit" ? (
-                  "Hold to use 1 credit"
-                ) : (
-                  `Hold to pay $${total.toFixed(2)}`
-                )}
+                {confirmed ? (<><Check className="w-4 h-4" /> Reservation confirmed</>) : "Hold to confirm reservation"}
               </span>
             </button>
           </div>

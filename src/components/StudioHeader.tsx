@@ -3,12 +3,14 @@ import { LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useStudioSettings } from "@/hooks/useStudioSettings";
 
 const StudioHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { settings } = useStudioSettings();
 
   const links = [
     { to: "/", label: "Schedule" },
@@ -19,11 +21,18 @@ const StudioHeader = () => {
 
   return (
     <header className="px-6 py-5 flex items-center justify-between border-b border-border/50">
-      <Link to="/" className="block">
-        <h1 className="font-display text-2xl tracking-[0.08em] text-foreground">STUDIO ROXX</h1>
-        <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground mt-0.5">
-          Pole · Dance · Strength
-        </p>
+      <Link to="/" className="flex items-center gap-3">
+        {settings.logo_url && (
+          <img src={settings.logo_url} alt="" className="h-10 w-10 rounded object-cover" />
+        )}
+        <div>
+          <h1 className="font-display text-2xl tracking-[0.08em] text-foreground uppercase">{settings.studio_name}</h1>
+          {settings.tagline && (
+            <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground mt-0.5">
+              {settings.tagline}
+            </p>
+          )}
+        </div>
       </Link>
       <nav className="flex items-center gap-6">
         {links.map((link) => (
@@ -32,9 +41,7 @@ const StudioHeader = () => {
             to={link.to}
             className={cn(
               "font-body text-xs tracking-wider uppercase transition-colors",
-              location.pathname === link.to
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
+              location.pathname === link.to ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {link.label}
@@ -47,10 +54,7 @@ const StudioHeader = () => {
               {user.email?.split("@")[0]}
             </span>
             <button
-              onClick={async () => {
-                await signOut();
-                navigate("/");
-              }}
+              onClick={async () => { await signOut(); navigate("/"); }}
               className="text-muted-foreground hover:text-accent transition-colors"
               aria-label="Sign out"
             >
