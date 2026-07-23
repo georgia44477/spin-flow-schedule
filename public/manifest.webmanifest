@@ -1,7 +1,7 @@
 {
-  "name": "Studio Roxx",
-  "short_name": "Roxx",
-  "description": "Book pole classes, manage memberships, and step into the spotlight.",
+  "name": "Studio Scheduler",
+  "short_name": "Scheduler",
+  "description": "Book classes, manage memberships, and run your studio.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

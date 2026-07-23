@@ -12,8 +12,8 @@ export interface StudioSettings {
 }
 
 const DEFAULTS: StudioSettings = {
-  studio_name: "Studio Roxx",
-  tagline: "Pole · Dance · Strength",
+  studio_name: "Studio Scheduler",
+  tagline: "Book · Move · Belong",
   timezone: "UTC",
   logo_url: null,
   hero_image_url: null,
